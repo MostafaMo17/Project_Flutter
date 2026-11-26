@@ -1,7 +1,6 @@
 // ===========================================================================
 // مفقوداتي - Campus Lost & Found
 // lib/main.dart
-// Owner: Team Lead
 // Description: App entry point. Configures Material 3 theme with the deep
 //   indigo/teal university palette and wraps the entire app in Directionality
 //   RTL so all screens flow naturally from right to left.
@@ -9,6 +8,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'data/mock_items.dart';
 import 'models/lost_item_model.dart';
 import 'screens/login_screen.dart';
@@ -31,6 +31,7 @@ class _MafqudatiAppState extends State<MafqudatiApp> {
   void initState() {
     super.initState();
     _appState = MockItems.createInitialState();
+    _appState.restoreItems();
   }
 
   @override
@@ -46,10 +47,7 @@ class _MafqudatiAppState extends State<MafqudatiApp> {
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(),
       builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        );
+        return Directionality(textDirection: TextDirection.rtl, child: child!);
       },
       home: LoginScreen(state: _appState),
     );

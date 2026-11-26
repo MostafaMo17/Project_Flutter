@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:project_flutter/data/mock_items.dart';
 import 'package:project_flutter/main.dart';
 import 'package:project_flutter/models/lost_item_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('Mafqudati: login navigates to home and shows items', (
     WidgetTester tester,
   ) async {
@@ -40,12 +42,12 @@ void main() {
     expect(find.text('رحلة الساحل'), findsNothing); // old app gone
   });
 
-  test('AppState: addItem prepends and stats update correctly', () {
+  test('AppState: addItem prepends and stats update correctly', () async {
     final state = MockItems.createInitialState();
     final initialLost = state.lostCount;
     final initialResolved = state.resolvedCount;
 
-    state.addItem(
+    await state.addItem(
       LostItem(
         id: 'test_1',
         title: 'محفظة بنية',
@@ -62,12 +64,35 @@ void main() {
     expect(state.lostCount, initialLost + 1);
     expect(state.items.first.title, 'محفظة بنية');
 
-    state.resolveItem('test_1');
+    await state.resolveItem('test_1');
     expect(state.lostCount, initialLost);
     expect(state.resolvedCount, initialResolved + 1);
 
-    state.deleteItem('test_1');
+    await state.deleteItem('test_1');
     expect(state.items.where((i) => i.id == 'test_1').isEmpty, true);
+  });
+
+  test('AppState: items persist and restore from local storage', () async {
+    final original = MockItems.createInitialState();
+    await original.addItem(
+      LostItem(
+        id: 'saved_item',
+        title: '\u0645\u0641\u062a\u0627\u062d \u0645\u062d\u0641\u0648\u0638',
+        description: '\u0645\u0641\u062a\u0627\u062d \u0628\u062c\u0648\u0627\u0631 \u0627\u0644\u0645\u0639\u0645\u0644',
+        location: '\u0627\u0644\u0645\u0639\u0645\u0644',
+        category: ItemCategory.keys,
+        contactPhone: '01012345678',
+        reporterName: '\u0637\u0627\u0644\u0628',
+        date: DateTime(2026, 1, 1),
+        isLost: false,
+      ),
+    );
+
+    final restored = MockItems.createInitialState();
+    await restored.restoreItems();
+    expect(restored.items.first.id, 'saved_item');
+    expect(restored.items.first.category, ItemCategory.keys);
+    expect(restored.items.first.date, DateTime(2026, 1, 1));
   });
 
   test('AppState: filteredItems works for query, category, and tab', () {

@@ -1,17 +1,54 @@
-# project_flutter
+# مفقوداتي - Campus Lost & Found
 
-A new Flutter project.
+**مفقوداتي** تطبيق جامعي يساعد الطلاب على الإبلاغ عن الأغراض المفقودة أو التي عُثر عليها داخل الحرم، والبحث في البلاغات والتواصل لاستعادة الممتلكات. الواجهة عربية باتجاه RTL، والتطبيق مبني باستخدام Flutter.
 
-## Getting Started
+## الفكرة | The idea
 
-This project is a starting point for a Flutter application.
+يجمع التطبيق بلاغات المفقودات والموجودات في مكان واحد بدل الاعتماد على الرسائل المتفرقة. يضيف الطالب وصفًا ومكانًا وتصنيفًا ورقم تواصل، ثم يستطيع الآخرون البحث والفلترة حسب الحالة والفئة. تحفظ البلاغات محليًا على الجهاز باستخدام shared_preferences، وتبدأ النسخة الجديدة بستة بلاغات تجريبية عند عدم وجود بيانات محفوظة.
 
-A few resources to get you started if this is your first Flutter project:
+ملاحظة: تسجيل الدخول الحالي تعريفي محلي فقط (اسم وكود/بريد)، ولا يمثل تحققًا من حساب جامعي، كما أن التخزين المحلي لا يزامن البيانات بين الأجهزة.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## المزايا | Features
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- واجهة عربية RTL بتصميم Material 3 متجاوب ومتمركز بعرض أقصى 600 بكسل في الشاشة الرئيسية.
+- تسجيل اسم المستخدم وكوده داخل جلسة التطبيق.
+- إضافة بلاغ «فقدت» أو «عثرت عليه» مع الوصف والموقع والتصنيف ورقم الهاتف.
+- استعراض التفاصيل، نسخ رقم التواصل، تأكيد التسليم، وحذف البلاغ.
+- بحث نصي ومرشحات للحالة والتصنيفات، مع إحصاءات مباشرة.
+- تخزين واستعادة البلاغات محليًا، وإعادة ضبطها إلى البيانات التجريبية من قائمة الصفحة الرئيسية.
+- انتقالات متحركة وإحصاءات متحركة.
+
+## العرض التجريبي | Live demo
+
+[افتح النسخة التجريبية على Vercel](https://flutter-dun-six.vercel.app)
+
+## بنية المجلدات | Project structure
+
+    lib/
+      main.dart                    نقطة تشغيل التطبيق والثيم واتجاه RTL
+      data/mock_items.dart         بيانات البداية التجريبية
+      models/lost_item_model.dart  نموذج البلاغ، الحالة، JSON والتخزين المحلي
+      screens/
+        login_screen.dart          شاشة الدخول التعريفية
+        home_screen.dart           القائمة والبحث والفلترة والإحصاءات
+        add_item_screen.dart       نموذج إضافة بلاغ
+        details_screen.dart        تفاصيل البلاغ وإجراءات التسليم
+    test/widget_test.dart          اختبارات الواجهة والحالة
+
+## التشغيل | Run locally
+
+تحتاج إلى تثبيت Flutter وDart وإعداد منصة تشغيل مناسبة (Android أو iOS أو Web أو Desktop).
+
+    flutter pub get
+    flutter run
+
+لتشغيل نسخة الويب محليًا:
+
+    flutter run -d chrome
+
+## التحقق | Checks
+
+    flutter analyze
+    flutter test
+
+بيانات التطبيق محفوظة محليًا في الجهاز/المتصفح ولا تنتقل بين المستخدمين. يلزم ربط خدمة خلفية وقاعدة بيانات ومصادقة جامعية لتحويل النموذج إلى خدمة مشتركة للإنتاج.

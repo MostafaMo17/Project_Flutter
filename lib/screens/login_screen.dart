@@ -1,13 +1,14 @@
 // ===========================================================================
 // مفقوداتي - Campus Lost & Found
 // lib/screens/login_screen.dart
-// Owner: Member 1
 // Description: University welcome/login screen. Collects the student's full
 //   name and university code/email with simple validation, then navigates to
 //   the Home screen. Uses the deep indigo/teal university brand palette.
 // ===========================================================================
 
 import 'package:flutter/material.dart';
+
+import '../page_transitions.dart';
 import '../models/lost_item_model.dart';
 import 'home_screen.dart';
 
@@ -37,9 +38,9 @@ class _LoginScreenState extends State<LoginScreen> {
       name: _nameController.text,
       code: _codeController.text,
     );
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => HomeScreen(state: widget.state)),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(buildAnimatedPageRoute(HomeScreen(state: widget.state)));
   }
 
   @override
@@ -57,9 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 12),
                   _buildHeroCard(),
-                  const SizedBox(height: 28),
-                  _buildFormCard(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+                  Transform.translate(
+                    offset: const Offset(0, -22),
+                    child: _buildFormCard(),
+                  ),
+                  const SizedBox(height: 12),
                   _buildInfoRow(),
                 ],
               ),
@@ -72,18 +76,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildHeroCard() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(26, 30, 26, 26),
+      padding: const EdgeInsets.fromLTRB(26, 30, 26, 48),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF1D4ED8), Color(0xFF2563EB)],
+          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF0D9488)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E3A8A).withValues(alpha: 0.3),
-            blurRadius: 24,
+            color: const Color(0xFF0D9488).withValues(alpha: 0.20),
+            blurRadius: 28,
             offset: const Offset(0, 12),
           ),
         ],
@@ -110,13 +114,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(13),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF5EEAD4)
+                              .withValues(alpha: 0.18),
+                          blurRadius: 22,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
                     child: const Icon(
-                      Icons.search_rounded,
+                      Icons.account_balance_rounded,
                       color: Colors.white,
-                      size: 28,
+                      size: 29,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -179,9 +194,9 @@ class _LoginScreenState extends State<LoginScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -226,26 +241,47 @@ class _LoginScreenState extends State<LoginScreen> {
                 hint: 'مثال: 20210001 أو ahmed@fci.edu',
                 icon: Icons.school_outlined,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'من فضلك أدخل الكود أو البريد' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'من فضلك أدخل الكود أو البريد'
+                  : null,
             ),
             const SizedBox(height: 22),
-            ElevatedButton(
-              onPressed: _handleLogin,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1E3A8A), Color(0xFF0D9488)],
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1E3A8A).withValues(alpha: 0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _handleLogin,
+                  borderRadius: BorderRadius.circular(16),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: Text(
+                        'دخول',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              child: const Text('دخول'),
             ),
           ],
         ),
@@ -256,11 +292,23 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildInfoRow() {
     return Row(
       children: const [
-        Expanded(child: _InfoPill(icon: Icons.lock_outline_rounded, label: 'بيانات آمنة')),
+        Expanded(
+          child: _InfoPill(
+            icon: Icons.lock_outline_rounded,
+            label: 'بيانات آمنة',
+          ),
+        ),
         SizedBox(width: 10),
-        Expanded(child: _InfoPill(icon: Icons.school_rounded, label: 'داخل الجامعة')),
+        Expanded(
+          child: _InfoPill(icon: Icons.school_rounded, label: 'داخل الجامعة'),
+        ),
         SizedBox(width: 10),
-        Expanded(child: _InfoPill(icon: Icons.volunteer_activism_rounded, label: 'مجاني تماماً')),
+        Expanded(
+          child: _InfoPill(
+            icon: Icons.volunteer_activism_rounded,
+            label: 'مجاني تماماً',
+          ),
+        ),
       ],
     );
   }
@@ -280,19 +328,19 @@ class _LoginScreenState extends State<LoginScreen> {
       labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFF1E3A8A), width: 1.8),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFFDC2626)),
       ),
     );
@@ -310,7 +358,7 @@ class _InfoPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(

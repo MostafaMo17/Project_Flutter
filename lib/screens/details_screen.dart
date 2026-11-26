@@ -1,7 +1,6 @@
 // ===========================================================================
 // مفقوداتي - Campus Lost & Found
 // lib/screens/details_screen.dart
-// Owner: Member 4
 // Description: Full item details view. Shows large category header, status
 //   badge, reporter name, campus location card, full description, and a
 //   contact phone box with a "نسخ الرقم" button (Clipboard). Bottom action
@@ -10,17 +9,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../models/lost_item_model.dart';
 
 class DetailsScreen extends StatelessWidget {
   final AppState state;
   final String itemId;
 
-  const DetailsScreen({
-    super.key,
-    required this.state,
-    required this.itemId,
-  });
+  const DetailsScreen({super.key, required this.state, required this.itemId});
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +77,11 @@ class DetailsScreen extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+          child: const Icon(
+            Icons.arrow_back_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
         onPressed: () => Navigator.of(context).pop(),
       ),
@@ -89,7 +89,11 @@ class DetailsScreen extends StatelessWidget {
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [cat.color, cat.color.withValues(alpha: 0.75)],
+              colors: [
+                const Color(0xFF0F172A),
+                const Color(0xFF1E3A8A),
+                const Color(0xFF0D9488),
+              ],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
@@ -102,13 +106,16 @@ class DetailsScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(14),
+                    Hero(
+                      tag: 'item-icon-${item.id}',
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(cat.icon, color: Colors.white, size: 26),
                       ),
-                      child: Icon(cat.icon, color: Colors.white, size: 26),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -137,19 +144,42 @@ class DetailsScreen extends StatelessWidget {
   Widget _buildStatusRow(LostItem item) {
     Widget badge;
     if (item.isResolved) {
-      badge = _statusBadge('تم التسليم', const Color(0xFFF59E0B),
-          const Color(0xFFFEF3C7), Icons.handshake_rounded);
+      badge = _statusBadge(
+        'تم التسليم ✓',
+        const Color(0xFF475569),
+        const Color(0xFFF1F5F9),
+        Icons.handshake_rounded,
+      );
     } else if (item.isLost) {
-      badge = _statusBadge('مفقود', const Color(0xFFDC2626),
-          const Color(0xFFFEE2E2), Icons.report_problem_rounded);
+      badge = _statusBadge(
+        'مفقود',
+        const Color(0xFFE11D48),
+        const Color(0xFFFFE4E6),
+        Icons.report_problem_rounded,
+      );
     } else {
-      badge = _statusBadge('تم العثور عليه', const Color(0xFF16A34A),
-          const Color(0xFFDCFCE7), Icons.check_circle_rounded);
+      badge = _statusBadge(
+        'تم العثور عليه',
+        const Color(0xFF15803D),
+        const Color(0xFFDCFCE7),
+        Icons.check_circle_rounded,
+      );
     }
 
     return Row(
       children: [
-        badge,
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 320),
+          switchInCurve: Curves.easeOutBack,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(scale: animation, child: child),
+          ),
+          child: KeyedSubtree(
+            key: ValueKey(item.isResolved ? 'resolved' : 'open'),
+            child: badge,
+          ),
+        ),
         const Spacer(),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -238,8 +268,18 @@ class DetailsScreen extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}  |  ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
@@ -328,7 +368,9 @@ class DetailsScreen extends StatelessWidget {
               const SizedBox(width: 10),
               ElevatedButton.icon(
                 onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: item.contactPhone));
+                  await Clipboard.setData(
+                    ClipboardData(text: item.contactPhone),
+                  );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -394,69 +436,81 @@ class DetailsScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: item.isResolved
-          ? Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: Color(0xFF16A34A),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'تم التسليم وإغلاق البلاغ',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF16A34A),
-                  ),
-                ),
-                const Spacer(),
-                _deleteButton(context, item),
-              ],
-            )
-          : Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      state.resolveItem(item.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'تم تأكيد التسليم وإغلاق البلاغ ✓',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: const Color(0xFF16A34A),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          margin: const EdgeInsets.all(16),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.handshake_rounded, size: 20),
-                    label: const Text('تأكيد التسليم وإغلاق البلاغ'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E3A8A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 14.5,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 360),
+        switchInCurve: Curves.easeOutBack,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(scale: animation, child: child),
+        ),
+        child: KeyedSubtree(
+          key: ValueKey(item.isResolved),
+          child: item.isResolved
+              ? Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF16A34A),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'تم التسليم وإغلاق البلاغ',
+                      style: TextStyle(
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
+                        color: Color(0xFF16A34A),
                       ),
                     ),
-                  ),
+                    const Spacer(),
+                    _deleteButton(context, item),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await state.resolveItem(item.id);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'تم تأكيد التسليم وإغلاق البلاغ ✓',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFF16A34A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: const EdgeInsets.all(16),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.handshake_rounded, size: 20),
+                        label: const Text('تأكيد التسليم وإغلاق البلاغ'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E3A8A),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _deleteButton(context, item),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                _deleteButton(context, item),
-              ],
-            ),
+        ),
+      ),
     );
   }
 
@@ -466,9 +520,7 @@ class DetailsScreen extends StatelessWidget {
       style: IconButton.styleFrom(
         backgroundColor: const Color(0xFFFEE2E2),
         foregroundColor: const Color(0xFFDC2626),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         minimumSize: const Size(46, 46),
       ),
       icon: const Icon(Icons.delete_outline_rounded),
@@ -505,7 +557,8 @@ class DetailsScreen extends StatelessWidget {
           ),
         );
         if (confirmed == true && context.mounted) {
-          state.deleteItem(item.id);
+          await state.deleteItem(item.id);
+          if (!context.mounted) return;
           Navigator.of(context).pop();
         }
       },
@@ -530,9 +583,9 @@ class _DetailCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),

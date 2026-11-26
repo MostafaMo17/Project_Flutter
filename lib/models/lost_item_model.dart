@@ -1,12 +1,14 @@
 // ===========================================================================
 // مفقوداتي - Campus Lost & Found
 // lib/models/lost_item_model.dart
-// Owner: Team Lead / All Members (shared data model)
 // Description: Defines the LostItem data model, category enum with icon &
 //   color helpers, and the reactive in-memory AppState using ChangeNotifier.
 // ===========================================================================
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Categories for lost/found items on campus.
 enum ItemCategory {
@@ -109,18 +111,89 @@ class LostItem {
       isResolved: isResolved ?? this.isResolved,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'location': location,
+    'category': category.name,
+    'contactPhone': contactPhone,
+    'reporterName': reporterName,
+    'date': date.toIso8601String(),
+    'isLost': isLost,
+    'isResolved': isResolved,
+  };
+
+  factory LostItem.fromJson(Map<String, dynamic> json) => LostItem(
+    id: json['id'] as String,
+    title: json['title'] as String,
+    description: json['description'] as String,
+    location: json['location'] as String,
+    category: ItemCategory.values.firstWhere(
+      (category) => category.name == json['category'],
+      orElse: () => ItemCategory.other,
+    ),
+    contactPhone: json['contactPhone'] as String,
+    reporterName: json['reporterName'] as String,
+    date: DateTime.parse(json['date'] as String),
+    isLost: json['isLost'] as bool,
+    isResolved: json['isResolved'] as bool? ?? false,
+  );
 }
 
 /// Reactive in-memory application state using ChangeNotifier.
 /// Holds the item list, current user, and all mutation methods.
 class AppState extends ChangeNotifier {
+  static const _storageKey = 'mafqoudati_items_v1';
   String _userName = '';
   String _userCode = '';
   final List<LostItem> _items;
+  final List<LostItem> _demoItems;
 
-  AppState({
-    required List<LostItem> initialItems,
-  }) : _items = List<LostItem>.from(initialItems);
+  AppState({required List<LostItem> initialItems})
+    : _items = List<LostItem>.from(initialItems),
+      _demoItems = List<LostItem>.from(initialItems);
+
+  Future<void> restoreItems() async {
+    final preferences = await SharedPreferences.getInstance();
+    final encodedItems = preferences.getString(_storageKey);
+    if (encodedItems == null) {
+      await _persistItems();
+      return;
+    }
+    try {
+      final decoded = jsonDecode(encodedItems) as List<dynamic>;
+      _items
+        ..clear()
+        ..addAll(
+          decoded.map(
+            (item) => LostItem.fromJson(item as Map<String, dynamic>),
+          ),
+        );
+      notifyListeners();
+    } on FormatException {
+      await resetDemoItems();
+    } on TypeError {
+      await resetDemoItems();
+    }
+  }
+
+  Future<void> _persistItems() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      _storageKey,
+      jsonEncode(_items.map((item) => item.toJson()).toList()),
+    );
+  }
+
+  Future<void> resetDemoItems() async {
+    _items
+      ..clear()
+      ..addAll(_demoItems);
+    await _persistItems();
+    notifyListeners();
+  }
 
   String get userName => _userName;
   String get userCode => _userCode;
@@ -136,20 +209,23 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addItem(LostItem item) {
+  Future<void> addItem(LostItem item) async {
     _items.insert(0, item);
+    await _persistItems();
     notifyListeners();
   }
 
-  void resolveItem(String id) {
+  Future<void> resolveItem(String id) async {
     final index = _items.indexWhere((i) => i.id == id);
     if (index == -1) return;
     _items[index] = _items[index].copyWith(isResolved: true);
+    await _persistItems();
     notifyListeners();
   }
 
-  void deleteItem(String id) {
+  Future<void> deleteItem(String id) async {
     _items.removeWhere((i) => i.id == id);
+    await _persistItems();
     notifyListeners();
   }
 
@@ -169,16 +245,16 @@ class AppState extends ChangeNotifier {
   }) {
     return _items.where((item) {
       final q = query.trim().toLowerCase();
-      final matchesQuery = q.isEmpty ||
+      final matchesQuery =
+          q.isEmpty ||
           item.title.toLowerCase().contains(q) ||
           item.location.toLowerCase().contains(q) ||
           item.description.toLowerCase().contains(q);
 
       final matchesCategory = category == null || item.category == category;
 
-      final matchesTab = tab == 0 ||
-          (tab == 1 && item.isLost) ||
-          (tab == 2 && !item.isLost);
+      final matchesTab =
+          tab == 0 || (tab == 1 && item.isLost) || (tab == 2 && !item.isLost);
 
       return matchesQuery && matchesCategory && matchesTab;
     }).toList();

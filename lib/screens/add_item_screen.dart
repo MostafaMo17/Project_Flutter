@@ -1,7 +1,6 @@
 // ===========================================================================
 // مفقوداتي - Campus Lost & Found
 // lib/screens/add_item_screen.dart
-// Owner: Member 3
 // Description: Form screen to submit a new lost or found report. Includes a
 //   segmented toggle (أنا فقدت / أنا لقيت), category chips, campus location
 //   picker, description, and phone number. Submitting prepends the item to the
@@ -9,6 +8,7 @@
 // ===========================================================================
 
 import 'package:flutter/material.dart';
+
 import '../models/lost_item_model.dart';
 
 /// Pre-defined campus locations for quick selection.
@@ -52,7 +52,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     super.dispose();
   }
 
-  void _submitReport() {
+  Future<void> _submitReport() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final newItem = LostItem(
@@ -69,7 +69,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
       isLost: _isLost,
     );
 
-    widget.state.addItem(newItem);
+    await widget.state.addItem(newItem);
+    if (!mounted) return;
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -125,8 +126,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 hint: 'مثال: كارنيه جامعي، سماعة بلوتوث',
                 icon: Icons.label_outline_rounded,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'من فضلك أدخل اسم الغرض' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'من فضلك أدخل اسم الغرض'
+                  : null,
             ),
             const SizedBox(height: 18),
 
@@ -138,28 +140,42 @@ class _AddItemScreenState extends State<AddItemScreen> {
               runSpacing: 8,
               children: ItemCategory.values.map((cat) {
                 final sel = _selectedCategory == cat;
-                return ChoiceChip(
-                  selected: sel,
-                  showCheckmark: false,
-                  onSelected: (_) => setState(() => _selectedCategory = cat),
-                  avatar: Icon(
-                    cat.icon,
-                    size: 16,
-                    color: sel ? Colors.white : cat.color,
-                  ),
-                  label: Text(cat.label),
-                  labelStyle: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12.5,
-                    color: sel ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                  selectedColor: cat.color,
-                  backgroundColor: Colors.white,
-                  side: BorderSide(
-                    color: sel ? cat.color : const Color(0xFFE2E8F0),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                return AnimatedScale(
+                  scale: sel ? 1.04 : 1,
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    padding: const EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: sel ? cat.softColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: ChoiceChip(
+                      selected: sel,
+                      showCheckmark: false,
+                      onSelected: (_) =>
+                          setState(() => _selectedCategory = cat),
+                      avatar: Icon(
+                        cat.icon,
+                        size: 16,
+                        color: sel ? Colors.white : cat.color,
+                      ),
+                      label: Text(cat.label),
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                        color: sel ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      selectedColor: cat.color,
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: sel ? cat.color : const Color(0xFFE2E8F0),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 );
               }).toList(),
@@ -232,8 +248,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 hint: 'مثال: اللون، علامات مميزة، الوقت التقريبي',
                 icon: Icons.notes_rounded,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'من فضلك أضف وصفاً مختصراً' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'من فضلك أضف وصفاً مختصراً'
+                  : null,
             ),
             const SizedBox(height: 18),
 
@@ -248,7 +265,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 icon: Icons.phone_outlined,
               ),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'من فضلك أدخل رقم الهاتف';
+                if (v == null || v.trim().isEmpty) {
+                  return '\u0645\u0646 \u0641\u0636\u0644\u0643 \u0623\u062f\u062e\u0644 \u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641';
+                }
                 if (v.trim().length < 10) return 'رقم الهاتف غير صحيح';
                 return null;
               },
@@ -322,11 +341,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   isFirst: true,
                 ),
               ),
-              Container(
-                width: 1,
-                height: 54,
-                color: const Color(0xFFE2E8F0),
-              ),
+              Container(width: 1, height: 54, color: const Color(0xFFE2E8F0)),
               Expanded(
                 child: _toggleOption(
                   label: 'أنا لقيت غرض',
@@ -366,21 +381,29 @@ class _AddItemScreenState extends State<AddItemScreen> {
             bottomLeft: !isFirst ? const Radius.circular(18) : Radius.zero,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon,
-                size: 18, color: selected ? selectedColor : const Color(0xFF64748B)),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
+        child: AnimatedScale(
+          scale: selected ? 1.025 : 1,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
                 color: selected ? selectedColor : const Color(0xFF64748B),
               ),
-            ),
-          ],
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? selectedColor : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
