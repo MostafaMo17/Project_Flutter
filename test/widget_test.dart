@@ -11,6 +11,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const MafqudatiApp());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     // Login screen
     expect(find.text('مفقوداتي'), findsWidgets);
@@ -18,7 +20,8 @@ void main() {
 
     await tester.ensureVisible(find.text('دخول'));
     await tester.tap(find.text('دخول'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     // Should fail validation — both fields empty
     expect(find.text('دخول'), findsOneWidget);
@@ -34,12 +37,39 @@ void main() {
     );
     await tester.ensureVisible(find.text('دخول'));
     await tester.tap(find.text('دخول'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     // Home screen
     expect(find.text('مفقوداتي'), findsWidgets);
     expect(find.text('إضافة بلاغ'), findsOneWidget);
     expect(find.text('رحلة الساحل'), findsNothing); // old app gone
+  });
+
+  testWidgets('logout returns to LoginScreen and clears navigation', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MafqudatiApp());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Ahmed Samy');
+    await tester.enterText(fields.at(1), '20210123');
+    await tester.tap(find.text('دخول'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byTooltip('تسجيل الخروج'), findsOneWidget);
+    await tester.tap(find.byTooltip('تسجيل الخروج'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('تسجيل الخروج').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('دخول'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNWidgets(2));
   });
 
   test('AppState: addItem prepends and stats update correctly', () async {

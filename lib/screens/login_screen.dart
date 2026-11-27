@@ -1,15 +1,9 @@
-// ===========================================================================
-// مفقوداتي - Campus Lost & Found
-// lib/screens/login_screen.dart
-// Description: University welcome/login screen. Collects the student's full
-//   name and university code/email with simple validation, then navigates to
-//   the Home screen. Uses the deep indigo/teal university brand palette.
-// ===========================================================================
-
 import 'package:flutter/material.dart';
 
+import '../app_colors.dart';
 import '../page_transitions.dart';
 import '../models/lost_item_model.dart';
+import '../widgets/bouncy_tap.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,24 +14,34 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
+  late final AnimationController _orbController;
+
+  @override
+  void initState() {
+    super.initState();
+    _orbController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _codeController.dispose();
+    _orbController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    widget.state.setUser(
-      name: _nameController.text,
-      code: _codeController.text,
-    );
+    await widget.state.login(_nameController.text, _codeController.text);
+    if (!mounted) return;
     Navigator.of(
       context,
     ).pushReplacement(buildAnimatedPageRoute(HomeScreen(state: widget.state)));
@@ -46,139 +50,166 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 12),
-                  _buildHeroCard(),
-                  const SizedBox(height: 8),
-                  Transform.translate(
-                    offset: const Offset(0, -22),
-                    child: _buildFormCard(),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildInfoRow(),
-                ],
+      backgroundColor: AppColors.canvas,
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 410,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(56),
+                ),
+              ),
+              child: AnimatedBuilder(
+                animation: _orbController,
+                builder: (context, _) {
+                  final phase = _orbController.value;
+                  return Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      Positioned(
+                        top: 35 + 18 * phase,
+                        right: -28,
+                        child: _lightOrb(170, 0.09),
+                      ),
+                      Positioned(
+                        top: 210 - 22 * phase,
+                        left: -34,
+                        child: _lightOrb(142, 0.08),
+                      ),
+                      Positioned(
+                        top: 125 + 12 * phase,
+                        right: 105,
+                        child: _lightOrb(54, 0.12),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
-        ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildHeroCard(),
+                      const SizedBox(height: 8),
+                      Transform.translate(
+                        offset: const Offset(0, -22),
+                        child: _buildFormCard(),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInfoRow(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeroCard() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(26, 30, 26, 48),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF0D9488)],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
+  Widget _lightOrb(double size, double opacity) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: opacity),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.teal.withValues(alpha: opacity * 0.7),
+          blurRadius: size * 0.55,
+          spreadRadius: size * 0.08,
         ),
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0D9488).withValues(alpha: 0.20),
-            blurRadius: 28,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
+      ],
+    ),
+  );
+
+  Widget _buildHeroCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 14, 8, 38),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PositionedDirectional(
-            end: -20,
-            top: -20,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.07),
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(13),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.24),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF5EEAD4)
-                              .withValues(alpha: 0.18),
-                          blurRadius: 22,
-                          spreadRadius: 2,
-                        ),
-                      ],
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.teal.withValues(alpha: 0.24),
+                      blurRadius: 22,
+                      spreadRadius: 2,
                     ),
-                    child: const Icon(
-                      Icons.account_balance_rounded,
+                  ],
+                ),
+                child: const Icon(
+                  Icons.account_balance_rounded,
+                  color: Colors.white,
+                  size: 29,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'مفقوداتي',
+                    style: TextStyle(
                       color: Colors.white,
-                      size: 29,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'مفقوداتي',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      Text(
-                        'Campus Lost & Found',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Campus Lost & Found',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
-              const Text(
-                'فقدت أو لقيت حاجة؟\nخلّينا نساعدك تعملها!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'منصة الجامعة لبلاغات المفقودات والموجودات داخل الحرم الجامعي.',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.88),
-                  fontSize: 13.5,
-                  height: 1.5,
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'فقدت أو لقيت حاجة؟\nخلّينا نساعدك!',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'منصة الجامعة لبلاغات المفقودات والموجودات داخل الحرم الجامعي.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.88),
+              fontSize: 13.5,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -189,19 +220,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [AppColors.cardShadow],
       ),
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -228,8 +254,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 hint: 'مثال: أحمد محمد',
                 icon: Icons.person_outline_rounded,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'من فضلك أدخل اسمك' : null,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'يرجى إدخال الاسم بالكامل';
+                }
+                if (!RegExp(r'^[\u0600-\u06FFa-zA-Z\s]+$').hasMatch(value)) {
+                  return 'الاسم يجب أن يحتوي على حروف فقط';
+                }
+                if (value.trim().split(RegExp(r'\s+')).length < 2) {
+                  return 'يرجى إدخال الاسم الثنائي على الأقل';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 14),
             TextFormField(
@@ -241,41 +277,44 @@ class _LoginScreenState extends State<LoginScreen> {
                 hint: 'مثال: 20210001 أو ahmed@fci.edu',
                 icon: Icons.school_outlined,
               ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'من فضلك أدخل الكود أو البريد'
-                  : null,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'يرجى إدخال الكود الجامعي أو البريد الإلكتروني';
+                }
+                final input = value.trim();
+                final isUniversityId = RegExp(r'^\d{6,14}$').hasMatch(input);
+                final isEmail = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$')
+                    .hasMatch(input);
+                if (!isUniversityId && !isEmail) {
+                  return 'أدخل كود جامعي صحيح (6-14 رقم) أو بريد إلكتروني صحيح';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 22),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1E3A8A), Color(0xFF0D9488)],
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF1E3A8A).withValues(alpha: 0.18),
-                    blurRadius: 16,
-                    offset: const Offset(0, 7),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _handleLogin,
+            BouncyTap(
+              onTap: _handleLogin,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.circular(16),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: Text(
-                        'دخول',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                  boxShadow: [AppColors.cardShadow],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: null,
+                    borderRadius: BorderRadius.circular(16),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: Text(
+                          'دخول',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
@@ -323,21 +362,21 @@ class _LoginScreenState extends State<LoginScreen> {
       hintText: hint,
       prefixIcon: Icon(icon, size: 20),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: AppColors.canvas,
       hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
       labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF1E3A8A), width: 1.8),
+        borderSide: const BorderSide(color: AppColors.indigo, width: 1.8),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -359,11 +398,11 @@ class _InfoPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF1E3A8A), size: 20),
+          Icon(icon, color: AppColors.indigo, size: 20),
           const SizedBox(height: 5),
           Text(
             label,

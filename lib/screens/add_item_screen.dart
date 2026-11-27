@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../app_colors.dart';
 import '../models/lost_item_model.dart';
 
 /// Pre-defined campus locations for quick selection.
@@ -62,8 +63,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
       location: _selectedLocation,
       category: _selectedCategory,
       contactPhone: _phoneController.text.trim(),
-      reporterName: widget.state.userName.isNotEmpty
-          ? widget.state.userName
+      reporterName: widget.state.currentUserName.isNotEmpty
+          ? widget.state.currentUserName
           : 'مجهول',
       date: DateTime.now(),
       isLost: _isLost,
@@ -79,7 +80,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF1E3A8A),
+        backgroundColor: AppColors.indigo,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
       ),
@@ -89,9 +90,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: const Text(
@@ -170,7 +171,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       selectedColor: cat.color,
                       backgroundColor: Colors.white,
                       side: BorderSide(
-                        color: sel ? cat.color : const Color(0xFFE2E8F0),
+                        color: sel ? cat.color : AppColors.border,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -189,7 +190,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.border),
               ),
               child: DropdownButtonHideUnderline(
                 child: ButtonTheme(
@@ -212,7 +213,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                                 const Icon(
                                   Icons.location_on_rounded,
                                   size: 16,
-                                  color: Color(0xFF1E3A8A),
+                                  color: AppColors.indigo,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -280,7 +281,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
               icon: const Icon(Icons.send_rounded, size: 20),
               label: const Text('إرسال البلاغ'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A),
+                backgroundColor: AppColors.indigo,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -303,15 +304,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [AppColors.cardShadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,7 +322,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
               ),
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: AppColors.border),
           Row(
             children: [
               Expanded(
@@ -341,14 +336,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   isFirst: true,
                 ),
               ),
-              Container(width: 1, height: 54, color: const Color(0xFFE2E8F0)),
+              Container(width: 1, height: 54, color: AppColors.border),
               Expanded(
                 child: _toggleOption(
                   label: 'أنا لقيت غرض',
                   icon: Icons.check_circle_rounded,
                   selected: !_isLost,
                   selectedColor: const Color(0xFF16A34A),
-                  selectedBg: const Color(0xFFDCFCE7),
+                  selectedBg: AppColors.foundBackground,
                   onTap: () => setState(() => _isLost = false),
                   isFirst: false,
                 ),
@@ -430,15 +425,15 @@ class _AddItemScreenState extends State<AddItemScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF1E3A8A), width: 1.8),
+        borderSide: const BorderSide(color: AppColors.indigo, width: 1.8),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),

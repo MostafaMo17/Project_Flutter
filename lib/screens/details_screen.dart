@@ -10,7 +10,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../app_colors.dart';
 import '../models/lost_item_model.dart';
+import '../widgets/bouncy_tap.dart';
 
 class DetailsScreen extends StatelessWidget {
   final AppState state;
@@ -36,7 +38,7 @@ class DetailsScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: AppColors.canvas,
           body: CustomScrollView(
             slivers: [
               _buildSliverAppBar(context, item),
@@ -87,17 +89,7 @@ class DetailsScreen extends StatelessWidget {
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF0F172A),
-                const Color(0xFF1E3A8A),
-                const Color(0xFF0D9488),
-              ],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-            ),
-          ),
+          decoration: BoxDecoration(gradient: AppColors.primaryGradient),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 72, 20, 20),
             child: Column(
@@ -146,22 +138,22 @@ class DetailsScreen extends StatelessWidget {
     if (item.isResolved) {
       badge = _statusBadge(
         'تم التسليم ✓',
-        const Color(0xFF475569),
-        const Color(0xFFF1F5F9),
+        AppColors.resolvedForeground,
+        AppColors.resolvedBackground,
         Icons.handshake_rounded,
       );
     } else if (item.isLost) {
       badge = _statusBadge(
         'مفقود',
-        const Color(0xFFE11D48),
-        const Color(0xFFFFE4E6),
+        AppColors.lostForeground,
+        AppColors.lostBackground,
         Icons.report_problem_rounded,
       );
     } else {
       badge = _statusBadge(
         'تم العثور عليه',
-        const Color(0xFF15803D),
-        const Color(0xFFDCFCE7),
+        AppColors.foundForeground,
+        AppColors.foundBackground,
         Icons.check_circle_rounded,
       );
     }
@@ -170,7 +162,7 @@ class DetailsScreen extends StatelessWidget {
       children: [
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 320),
-          switchInCurve: Curves.easeOutBack,
+          switchInCurve: Curves.easeOutCubic,
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: ScaleTransition(scale: animation, child: child),
@@ -184,7 +176,7 @@ class DetailsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: AppColors.resolvedBackground,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -253,7 +245,7 @@ class DetailsScreen extends StatelessWidget {
             icon: Icons.location_on_rounded,
             label: 'المكان',
             value: item.location,
-            valueColor: const Color(0xFF1E3A8A),
+            valueColor: AppColors.indigo,
           ),
           const Divider(height: 20),
           _InfoRow(
@@ -350,9 +342,9 @@ class DetailsScreen extends StatelessWidget {
                     vertical: 13,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppColors.canvas,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Text(
                     item.contactPhone,
@@ -380,7 +372,7 @@ class DetailsScreen extends StatelessWidget {
                         ),
                         behavior: SnackBarBehavior.floating,
                         duration: const Duration(seconds: 2),
-                        backgroundColor: const Color(0xFF0D9488),
+                        backgroundColor: AppColors.teal,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -392,7 +384,7 @@ class DetailsScreen extends StatelessWidget {
                 icon: const Icon(Icons.copy_rounded, size: 16),
                 label: const Text('نسخ'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0D9488),
+                  backgroundColor: AppColors.teal,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
@@ -426,8 +418,8 @@ class DetailsScreen extends StatelessWidget {
         MediaQuery.of(context).padding.bottom + 12,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: const Color(0xFFE2E8F0))),
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -438,7 +430,7 @@ class DetailsScreen extends StatelessWidget {
       ),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 360),
-        switchInCurve: Curves.easeOutBack,
+        switchInCurve: Curves.easeOutCubic,
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
           child: ScaleTransition(scale: animation, child: child),
@@ -450,7 +442,7 @@ class DetailsScreen extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.check_circle_rounded,
-                      color: Color(0xFF16A34A),
+                      color: AppColors.resolvedForeground,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -459,7 +451,7 @@ class DetailsScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF16A34A),
+                        color: AppColors.resolvedForeground,
                       ),
                     ),
                     const Spacer(),
@@ -469,38 +461,41 @@ class DetailsScreen extends StatelessWidget {
               : Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await state.resolveItem(item.id);
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'تم تأكيد التسليم وإغلاق البلاغ ✓',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                      child: BouncyTap(
+                        onTap: null,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            await state.resolveItem(item.id);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  'تم تأكيد التسليم وإغلاق البلاغ ✓',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: const Color(0xFF16A34A),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.all(16),
                               ),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: const Color(0xFF16A34A),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              margin: const EdgeInsets.all(16),
+                            );
+                          },
+                          icon: const Icon(Icons.handshake_rounded, size: 20),
+                          label: const Text('تأكيد التسليم وإغلاق البلاغ'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.indigo,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.handshake_rounded, size: 20),
-                        label: const Text('تأكيد التسليم وإغلاق البلاغ'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E3A8A),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
+                            textStyle: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -578,16 +573,10 @@ class _DetailCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [AppColors.cardShadow],
       ),
       child: child,
     );

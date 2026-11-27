@@ -1,10 +1,3 @@
-// ===========================================================================
-// مفقوداتي - Campus Lost & Found
-// lib/models/lost_item_model.dart
-// Description: Defines the LostItem data model, category enum with icon &
-//   color helpers, and the reactive in-memory AppState using ChangeNotifier.
-// ===========================================================================
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -146,14 +139,16 @@ class LostItem {
 /// Holds the item list, current user, and all mutation methods.
 class AppState extends ChangeNotifier {
   static const _storageKey = 'mafqoudati_items_v1';
-  String _userName = '';
-  String _userCode = '';
+  static const _userNameKey = 'mafqoudati_current_user_name_v1';
+  static const _userIdKey = 'mafqoudati_current_user_id_v1';
+  String _currentUserName = '';
+  String _currentUserId = '';
   final List<LostItem> _items;
-  final List<LostItem> _demoItems;
+  final List<LostItem> _initialItems;
 
   AppState({required List<LostItem> initialItems})
     : _items = List<LostItem>.from(initialItems),
-      _demoItems = List<LostItem>.from(initialItems);
+      _initialItems = List<LostItem>.from(initialItems);
 
   Future<void> restoreItems() async {
     final preferences = await SharedPreferences.getInstance();
@@ -173,9 +168,9 @@ class AppState extends ChangeNotifier {
         );
       notifyListeners();
     } on FormatException {
-      await resetDemoItems();
+      await _restoreInitialItems();
     } on TypeError {
-      await resetDemoItems();
+      await _restoreInitialItems();
     }
   }
 
@@ -187,25 +182,44 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<void> resetDemoItems() async {
+  Future<void> _restoreInitialItems() async {
     _items
       ..clear()
-      ..addAll(_demoItems);
+      ..addAll(_initialItems);
     await _persistItems();
     notifyListeners();
   }
 
-  String get userName => _userName;
-  String get userCode => _userCode;
+  String get currentUserName => _currentUserName;
+  String get currentUserId => _currentUserId;
   List<LostItem> get items => List.unmodifiable(_items);
 
   int get lostCount => _items.where((i) => i.isLost && !i.isResolved).length;
   int get foundCount => _items.where((i) => !i.isLost && !i.isResolved).length;
   int get resolvedCount => _items.where((i) => i.isResolved).length;
 
-  void setUser({required String name, required String code}) {
-    _userName = name.trim();
-    _userCode = code.trim();
+  Future<void> restoreUserSession() async {
+    final preferences = await SharedPreferences.getInstance();
+    _currentUserName = preferences.getString(_userNameKey) ?? '';
+    _currentUserId = preferences.getString(_userIdKey) ?? '';
+    notifyListeners();
+  }
+
+  Future<void> login(String name, String id) async {
+    _currentUserName = name.trim();
+    _currentUserId = id.trim();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_userNameKey, _currentUserName);
+    await preferences.setString(_userIdKey, _currentUserId);
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_userNameKey);
+    await preferences.remove(_userIdKey);
+    _currentUserName = '';
+    _currentUserId = '';
     notifyListeners();
   }
 

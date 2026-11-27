@@ -9,9 +9,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
 import 'data/mock_items.dart';
 import 'models/lost_item_model.dart';
+import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+
+export 'app_colors.dart';
 
 void main() {
   runApp(const MafqudatiApp());
@@ -26,12 +30,20 @@ class MafqudatiApp extends StatefulWidget {
 
 class _MafqudatiAppState extends State<MafqudatiApp> {
   late final AppState _appState;
+  late final Future<void> _initialization;
 
   @override
   void initState() {
     super.initState();
     _appState = MockItems.createInitialState();
-    _appState.restoreItems();
+    _initialization = _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await Future.wait([
+      _appState.restoreItems(),
+      _appState.restoreUserSession(),
+    ]);
   }
 
   @override
@@ -49,29 +61,38 @@ class _MafqudatiAppState extends State<MafqudatiApp> {
       builder: (context, child) {
         return Directionality(textDirection: TextDirection.rtl, child: child!);
       },
-      home: LoginScreen(state: _appState),
+      home: FutureBuilder<void>(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return _appState.currentUserName.isNotEmpty
+              ? HomeScreen(state: _appState)
+              : LoginScreen(state: _appState);
+        },
+      ),
     );
   }
 
   ThemeData _buildTheme() {
-    const primary = Color(0xFF1E3A8A);
-    const teal = Color(0xFF0D9488);
-
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: primary,
+      seedColor: AppColors.indigo,
       brightness: Brightness.light,
-      primary: primary,
+      primary: AppColors.indigo,
       onPrimary: Colors.white,
-      secondary: teal,
+      secondary: AppColors.teal,
       onSecondary: Colors.white,
-      surface: Colors.white,
-      onSurface: const Color(0xFF0F172A),
+      surface: AppColors.surface,
+      onSurface: AppColors.text,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      scaffoldBackgroundColor: AppColors.canvas,
       fontFamily: null, // Uses device default (Arabic-compatible)
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -83,7 +104,7 @@ class _MafqudatiAppState extends State<MafqudatiApp> {
         },
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFF8FAFC),
+        backgroundColor: AppColors.canvas,
         foregroundColor: Color(0xFF0F172A),
         elevation: 0,
         scrolledUnderElevation: 0,

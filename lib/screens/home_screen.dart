@@ -10,10 +10,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../app_colors.dart';
 import '../models/lost_item_model.dart';
 import '../page_transitions.dart';
+import '../widgets/bouncy_tap.dart';
 import 'add_item_screen.dart';
 import 'details_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final AppState state;
@@ -43,6 +46,48 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تسجيل الخروج'),
+        content: const Text('هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('تسجيل الخروج'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    await widget.state.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => LoginScreen(state: widget.state)),
+      (route) => false,
+    );
+  }
+
+  Widget _headerCircle(double size) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: 0.055),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -55,263 +100,272 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFFF8FAFC),
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            titleSpacing: 20,
-            actions: [
-              PopupMenuButton<String>(
-                tooltip: '\u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a',
-                onSelected: (value) async {
-                  if (value != 'reset') return;
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      title: const Text(
-                        '\u0625\u0639\u0627\u062f\u0629 \u0636\u0628\u0637 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u062c\u0631\u064a\u0628\u064a\u0629',
-                      ),
-                      content: const Text(
-                        '\u0633\u064a\u062a\u0645 \u0627\u0633\u062a\u0628\u062f\u0627\u0644 \u0627\u0644\u0628\u0644\u0627\u063a\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 \u0628\u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u062c\u0631\u064a\u0628\u064a\u0629 \u0627\u0644\u0633\u062a\u0629.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext, false),
-                          child: const Text('\u0625\u0644\u063a\u0627\u0621'),
-                        ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(dialogContext, true),
-                          child: const Text(
-                            '\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0636\u0628\u0637',
+          backgroundColor: AppColors.canvas,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(222),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(32),
+                ),
+              ),
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  Positioned(top: -78, left: -38, child: _headerCircle(190)),
+                  Positioned(top: 84, right: -52, child: _headerCircle(132)),
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 8, 12, 16),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(9),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(13),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.white,
+                                  size: 21,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'مفقوداتي',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      widget.state.currentUserName.isNotEmpty
+                                          ? 'أهلاً، ${widget.state.currentUserName}'
+                                          : 'الحرم الجامعي',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.82,
+                                        ),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'تسجيل الخروج',
+                                onPressed: _confirmLogout,
+                                color: Colors.white,
+                                icon: const Icon(Icons.logout_rounded),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirmed == true) await widget.state.resetDemoItems();
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                    value: 'reset',
-                    child: Text(
-                      '\u0625\u0639\u0627\u062f\u0629 \u0636\u0628\u0637 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u062c\u0631\u064a\u0628\u064a\u0629',
+                          const SizedBox(height: 12),
+                          _StatsBanner(state: widget.state),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.search_rounded,
-                    color: Color(0xFF1E3A8A),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'مفقوداتي',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        widget.state.userName.isNotEmpty
-                            ? 'أهلاً، ${widget.state.userName.split(' ').first}'
-                            : 'الحرم الجامعي',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
           ),
-          body: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Column(
-                children: [
-                  // ── Stats Banner ──────────────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                    child: _StatsBanner(state: widget.state),
-                  ),
-                  const SizedBox(height: 14),
+          body: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topCenter,
+                radius: 1.2,
+                colors: [Color(0xFFEAF2FF), AppColors.canvas],
+              ),
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  children: [
+                    // â”€â”€ Stats Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    const SizedBox(height: 10),
 
-                  // ── Search Bar ────────────────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'ابحث باسم الغرض أو المكان...',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 14,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: Color(0xFF64748B),
-                          size: 20,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1E3A8A),
-                            width: 1.6,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // ── Status Tab ────────────────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _TabButton(
-                          label: 'الكل',
-                          selected: _statusTab == 0,
-                          onTap: () => setState(() => _statusTab = 0),
-                        ),
-                        const SizedBox(width: 8),
-                        _TabButton(
-                          label: 'مفقود',
-                          selected: _statusTab == 1,
-                          onTap: () => setState(() => _statusTab = 1),
-                          selectedColor: const Color(0xFFE11D48),
-                          selectedBg: const Color(0xFFFFE4E6),
-                        ),
-                        const SizedBox(width: 8),
-                        _TabButton(
-                          label: 'تم العثور عليه',
-                          selected: _statusTab == 2,
-                          onTap: () => setState(() => _statusTab = 2),
-                          selectedColor: const Color(0xFF15803D),
-                          selectedBg: const Color(0xFFDCFCE7),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // ── Category Chips ────────────────────────────────────────────
-                  SizedBox(
-                    height: 38,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
+                    // â”€â”€ Search Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        _CategoryChip(
-                          label: 'الكل',
-                          icon: Icons.apps_rounded,
-                          selected: _selectedCategory == null,
-                          onTap: () => setState(() => _selectedCategory = null),
-                          color: const Color(0xFF1E3A8A),
-                        ),
-                        const SizedBox(width: 8),
-                        ...ItemCategory.values.map(
-                          (cat) => Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: _CategoryChip(
-                              label: cat.label,
-                              icon: cat.icon,
-                              selected: _selectedCategory == cat,
-                              onTap: () => setState(() {
-                                _selectedCategory = _selectedCategory == cat
-                                    ? null
-                                    : cat;
-                              }),
-                              color: cat.color,
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'ابحث باسم الغرض أو المكان...',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF64748B),
+                            size: 20,
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.indigo,
+                              width: 1.6,
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 10),
 
-                  // ── Item List ─────────────────────────────────────────────────
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(16, 2, 16, 96),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final item = filtered[index];
-                              return _StaggeredEntrance(
-                                key: ValueKey(
-                                  '${item.id}-$_searchQuery-$_statusTab-${_selectedCategory?.name}',
-                                ),
-                                index: index,
-                                child: _ItemCard(
-                                  item: item,
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      buildAnimatedPageRoute(
-                                        DetailsScreen(
-                                          state: widget.state,
-                                          itemId: item.id,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
+                    // â”€â”€ Status Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _TabButton(
+                              label: 'الكل',
+                              selected: _statusTab == 0,
+                              onTap: () => setState(() => _statusTab = 0),
+                            ),
+                            const SizedBox(width: 8),
+                            _TabButton(
+                              label: 'مفقود',
+                              selected: _statusTab == 1,
+                              onTap: () => setState(() => _statusTab = 1),
+                              selectedColor: const Color(0xFFE11D48),
+                              selectedBg: AppColors.lostBackground,
+                            ),
+                            const SizedBox(width: 8),
+                            _TabButton(
+                              label: 'تم العثور عليه',
+                              selected: _statusTab == 2,
+                              onTap: () => setState(() => _statusTab = 2),
+                              selectedColor: AppColors.foundForeground,
+                              selectedBg: AppColors.foundBackground,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // â”€â”€ Category Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    SizedBox(
+                      height: 38,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          _CategoryChip(
+                            label: 'الكل',
+                            icon: Icons.apps_rounded,
+                            selected: _selectedCategory == null,
+                            onTap: () =>
+                                setState(() => _selectedCategory = null),
+                            color: AppColors.indigo,
                           ),
-                  ),
-                ],
+                          const SizedBox(width: 8),
+                          ...ItemCategory.values.map(
+                            (cat) => Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: _CategoryChip(
+                                label: cat.label,
+                                icon: cat.icon,
+                                selected: _selectedCategory == cat,
+                                onTap: () => setState(() {
+                                  _selectedCategory = _selectedCategory == cat
+                                      ? null
+                                      : cat;
+                                }),
+                                color: cat.color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // â”€â”€ Item List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(16, 2, 16, 96),
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final item = filtered[index];
+                                return _StaggeredEntrance(
+                                  key: ValueKey(
+                                    '${item.id}-$_searchQuery-$_statusTab-${_selectedCategory?.name}',
+                                  ),
+                                  index: index,
+                                  child: _ItemCard(
+                                    item: item,
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        buildAnimatedPageRoute(
+                                          DetailsScreen(
+                                            state: widget.state,
+                                            itemId: item.id,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -321,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 buildAnimatedPageRoute(AddItemScreen(state: widget.state)),
               );
             },
-            backgroundColor: const Color(0xFF1E3A8A),
+            backgroundColor: AppColors.indigo,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_rounded),
             label: const Text(
@@ -341,26 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.94, end: 1.06),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.easeInOutSine,
-              builder: (context, scale, child) => Transform.scale(
-                scale: scale,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A).withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.search_off_rounded,
-                    size: 44,
-                    color: Color(0xFF1E3A8A),
-                  ),
-                ),
-              ),
-            ),
+            const _FloatingEmptyIcon(),
             const SizedBox(height: 16),
             const Text(
               'لا توجد نتائج',
@@ -383,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ── Stats Banner ──────────────────────────────────────────────────────────────
+// â”€â”€ Stats Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StaggeredEntrance extends StatefulWidget {
   final int index;
@@ -422,11 +457,11 @@ class _StaggeredEntranceState extends State<_StaggeredEntrance> {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: _visible ? 1 : 0),
       duration: Duration(milliseconds: _visible ? 360 : 0),
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOutQuart,
       builder: (context, progress, child) => Opacity(
         opacity: progress,
         child: Transform.translate(
-          offset: Offset(0, (1 - progress) * 14),
+          offset: Offset(0, (1 - progress) * 18),
           child: child,
         ),
       ),
@@ -444,19 +479,10 @@ class _StatsBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF0D9488)],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: Colors.white.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        boxShadow: const [AppColors.cardShadow],
       ),
       child: Row(
         children: [
@@ -465,7 +491,7 @@ class _StatsBanner extends StatelessWidget {
               label: 'بلاغات مفقودة',
               value: state.lostCount,
               icon: Icons.report_problem_rounded,
-              color: const Color(0xFFFECACA),
+              color: AppColors.lostBackground,
             ),
           ),
           _verticalDivider(),
@@ -474,7 +500,7 @@ class _StatsBanner extends StatelessWidget {
               label: 'تم العثور عليها',
               value: state.foundCount,
               icon: Icons.check_circle_outline_rounded,
-              color: const Color(0xFFA7F3D0),
+              color: AppColors.foundBackground,
             ),
           ),
           _verticalDivider(),
@@ -483,7 +509,7 @@ class _StatsBanner extends StatelessWidget {
               label: 'تم تسليمها',
               value: state.resolvedCount,
               icon: Icons.handshake_rounded,
-              color: const Color(0xFFFDE68A),
+              color: AppColors.resolvedBackground,
             ),
           ),
         ],
@@ -496,6 +522,59 @@ class _StatsBanner extends StatelessWidget {
       width: 1,
       height: 36,
       color: Colors.white.withValues(alpha: 0.2),
+    );
+  }
+}
+
+class _FloatingEmptyIcon extends StatefulWidget {
+  const _FloatingEmptyIcon();
+
+  @override
+  State<_FloatingEmptyIcon> createState() => _FloatingEmptyIconState();
+}
+
+class _FloatingEmptyIconState extends State<_FloatingEmptyIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, -5 * _controller.value),
+        child: Transform.scale(
+          scale: 0.98 + 0.04 * _controller.value,
+          child: child,
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.indigo.withValues(alpha: 0.08),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.search_off_rounded,
+          size: 44,
+          color: AppColors.indigo,
+        ),
+      ),
     );
   }
 }
@@ -554,7 +633,7 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-// ── Tab / Category Chips ──────────────────────────────────────────────────────
+// â”€â”€ Tab / Category Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TabButton extends StatelessWidget {
   final String label;
@@ -567,37 +646,32 @@ class _TabButton extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.selectedColor = const Color(0xFF1E3A8A),
+    this.selectedColor = AppColors.indigo,
     this.selectedBg = const Color(0xFFEFF6FF),
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return BouncyTap(
       onTap: onTap,
-      child: AnimatedScale(
-        scale: selected ? 1.03 : 1,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
-            color: selected ? selectedBg : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected
-                  ? selectedColor.withValues(alpha: 0.5)
-                  : const Color(0xFFE2E8F0),
-            ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? selectedBg : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected
+                ? selectedColor.withValues(alpha: 0.5)
+                : AppColors.border,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: selected ? selectedColor : const Color(0xFF64748B),
-            ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: selected ? selectedColor : const Color(0xFF64748B),
           ),
         ),
       ),
@@ -622,44 +696,37 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return BouncyTap(
       onTap: onTap,
-      child: AnimatedScale(
-        scale: selected ? 1.03 : 1,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? color : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected ? color : const Color(0xFFE2E8F0),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: selected ? Colors.white : color),
-              const SizedBox(width: 5),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : const Color(0xFF0F172A),
-                ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: selected ? color : AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: selected ? Colors.white : color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : const Color(0xFF0F172A),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ── Item Card ─────────────────────────────────────────────────────────────────
+// â”€â”€ Item Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ItemCard extends StatelessWidget {
   final LostItem item;
@@ -684,42 +751,35 @@ class _ItemCard extends StatelessWidget {
     if (item.isResolved) {
       statusBadge = _buildBadge(
         'تم التسليم ✓',
-        const Color(0xFF475569),
-        const Color(0xFFF1F5F9),
+        AppColors.resolvedForeground,
+        AppColors.resolvedBackground,
         Icons.handshake_rounded,
       );
     } else if (item.isLost) {
       statusBadge = _buildBadge(
         'مفقود',
-        const Color(0xFFE11D48),
-        const Color(0xFFFFE4E6),
+        AppColors.lostForeground,
+        AppColors.lostBackground,
         Icons.report_problem_rounded,
       );
     } else {
       statusBadge = _buildBadge(
         'تم العثور عليه',
-        const Color(0xFF15803D),
-        const Color(0xFFDCFCE7),
+        AppColors.foundForeground,
+        AppColors.foundBackground,
         Icons.check_circle_rounded,
       );
     }
 
-    return InkWell(
+    return BouncyTap(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.border),
+          boxShadow: const [AppColors.cardShadow],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
